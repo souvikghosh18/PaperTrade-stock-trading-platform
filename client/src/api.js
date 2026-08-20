@@ -2,7 +2,7 @@ import axios from "axios";
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
-  "https://papertrade-stock-trading-platform-1.onrender.com/api";
+  "https://papertrade-stock-trading-platform.onrender.com/api";
 
 export const API = axios.create({
   baseURL: API_URL,
