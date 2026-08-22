@@ -11,19 +11,24 @@ const router = Router();
 // =========================================================
 
 router.post("/register", async (req, res) => {
-
   try {
+    const {
+      name,
+      username,
+      email,
+      password
+    } = req.body;
 
-    const { name, email, password } = req.body;
-
+    // Accept either username or name from frontend
+    const finalUsername = username || name;
+    const finalName = name || username;
 
     // Check required fields
-    if (!name || !email || !password) {
+    if (!finalUsername || !email || !password) {
       return res.status(400).json({
         message: "All fields are required"
       });
     }
-
 
     // Check password length
     if (password.length < 6) {
@@ -32,34 +37,30 @@ router.post("/register", async (req, res) => {
       });
     }
 
-
-    // Check existing user
+    // Check existing email or username
     const exists = await User.findOne({
-      email
+      $or: [
+        { email },
+        { username: finalUsername }
+      ]
     });
-
 
     if (exists) {
       return res.status(409).json({
-        message: "Email already registered"
+        message: "Email or username already registered"
       });
     }
 
-
     // Hash password
-    const hash = await bcrypt.hash(
-      password,
-      10
-    );
-
+    const hash = await bcrypt.hash(password, 10);
 
     // Create user
     const user = await User.create({
-      name,
+      name: finalName,
+      username: finalUsername,
       email,
       password: hash
     });
-
 
     // Create JWT token
     const token = jwt.sign(
@@ -72,36 +73,24 @@ router.post("/register", async (req, res) => {
       }
     );
 
-
     // Send response
     res.status(201).json({
       token,
       user: {
         name: user.name,
+        username: user.username,
         email: user.email,
         cash: user.cash
       }
     });
 
-
   } catch (e) {
-
-    // IMPORTANT:
-    // Show the real registration error
-    console.error(
-      "REGISTER ERROR:",
-      e
-    );
-
+    console.error("REGISTER ERROR:", e);
 
     res.status(500).json({
-      message:
-        e.message ||
-        "Registration failed"
+      message: e.message || "Registration failed"
     });
-
   }
-
 });
 
 
